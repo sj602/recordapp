@@ -12,6 +12,7 @@ BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))))
 )
+
 # ----------------------------------------------------------------------------
 
 
@@ -35,8 +36,9 @@ def load_h5(h5_path):
 
 
 def upsample_wav(wav, args, model):
-
-    wav = f"{BASE_DIR}/{wav}"
+    print("upsample")
+    # wav = f"{BASE_DIR}/{wav}"
+    # print(f'wav: {wav}, args: {args}')
     # load signal
     x_hr, fs = librosa.load(wav, sr=args.sr)
 

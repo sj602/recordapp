@@ -1,4 +1,3 @@
-import server
 from PyQt5.QtWidgets import (
     QWidget,
     QDesktopWidget,
@@ -20,6 +19,7 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVER_DIR = os.path.join(BASE_DIR, "server")
 sys.path.append(SERVER_DIR)
+import server
 
 
 class AudioResolutionApp(QWidget):
@@ -127,16 +127,17 @@ class AudioResolutionApp(QWidget):
             audio_record_thread.start()  # 녹음 시작
             print("녹화 및 녹음중")
         else:
+            print("녹화 종료")
             self.showNormal()  # 최소화된 애플리케이션 창 다시 보여주기
-            # self.convert_audio_to_super_resolution()  # 딥러닝으로 변환하는 로직 부분
+            self.convert_audio_to_super_resolution()  # 딥러닝으로 변환하는 로직 부분
             merge_thread = threading.Thread(target=self.merge_audio_and_video)
             merge_thread.daemon = True
             merge_thread.start()
 
     def convert_audio_to_super_resolution(self):
         print("변환을 시작합니다...")
-        file_name = self.audio_recorder.file_name
-        server.audio_resolution(file_name)
+        original_file_name = self.audio_recorder.file_name[self.audio_recorder.file_name.rfind('/') + 1:]
+        server.audio_resolution(original_file_name)
 
         # original_audio = "audio.wav"
         # # server.audio_resolution("audio.wav")

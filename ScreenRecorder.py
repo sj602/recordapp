@@ -33,7 +33,7 @@ class ScreenReader:
 
     def screen_record(self):
         self.out = cv2.VideoWriter(
-            self.file_name, self.fourcc, fps=20.0, self.SCREEN_SIZE)
+            self.file_name, self.fourcc, 20.0, self.SCREEN_SIZE)
 
         # self.out = cv2.VideoWriter(
         #     filename=self.file_name, apiPreference=None, params=None, fourcc=self.fourcc, fps=20.0, frameSize=self.SCREEN_SIZE)

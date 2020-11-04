@@ -1,19 +1,18 @@
+import tensorflow as tf
+from models.io import load_h5, upsample_wav
+from models.model import default_opt
+import models
+import numpy as np
+import argparse
+import matplotlib
 import os
 
 os.sys.path.append(os.path.abspath("."))
 os.sys.path.append(os.path.dirname(os.path.abspath(".")))
 
-import matplotlib
 
 matplotlib.use("Agg")
 
-import argparse
-import numpy as np
-
-import models
-from models.model import default_opt
-from models.io import load_h5, upsample_wav
-import tensorflow as tf
 
 # ----------------------------------------------------------------------------
 
@@ -48,8 +47,10 @@ def make_parser():
         type=int,
         help="number of layers in each of the D and U halves of the network",
     )
-    train_parser.add_argument("--alg", default="adam", help="optimization algorithm")
-    train_parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
+    train_parser.add_argument("--alg", default="adam",
+                              help="optimization algorithm")
+    train_parser.add_argument("--lr", default=1e-3,
+                              type=float, help="learning rate")
 
     # eval
 
@@ -102,25 +103,19 @@ def train(args):
     # model.load(args.logname) # from default checkpoint
 
     # train model
-    model.fit(X_train, Y_train, Z_train, X_val, Y_val, Z_val, n_epoch=args.epochs)
+    model.fit(X_train, Y_train, Z_train, X_val,
+              Y_val, Z_val, n_epoch=args.epochs)
 
 
 #   model.fit(X_train, Y_train, X_val, Y_val, n_epoch=args.epochs)
 
 
 def eval(args):
+    print("------eval---------")
     # load model
     model = get_model(args, 0, args.r, from_ckpt=True, train=False)
     model.load(args.logname)  # from default checkpoint
-
-    if args.wav_file_list:
-        with open(args.wav_file_list) as f:
-            for line in f:
-                try:
-                    print(line.strip())
-                    upsample_wav(line.strip(), args, model)
-                except EOFError:
-                    print("WARNING: Error reading file:", line.strip())
+    upsample_wav(args.wav_file_list, args, model)
 
 
 def get_model(args, n_dim, r, from_ckpt=False, train=True):
@@ -149,11 +144,12 @@ def get_model(args, n_dim, r, from_ckpt=False, train=True):
 
 
 def main():
+    print("----main start----")
     parser = make_parser()
     args = parser.parse_args()
     args.func(args)
+    print("----main end----")
 
 
 if __name__ == "__main__":
     main()
-
