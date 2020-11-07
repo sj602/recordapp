@@ -190,7 +190,7 @@ class Model(object):
 
     # get graph tensors
     X, Y, Z, alpha = tf.get_collection('inputs')
-
+    
     # save tensors as instance variables
     self.inputs = X, Y, Z, alpha
     self.x3 = tf.get_collection('x3_preds')[0]
@@ -287,6 +287,8 @@ class Model(object):
     return loss
 
   def load_batch(self, batch, alpha=1, train=True):
+    print("---------self.inputs")
+    print(self.inputs)
     X_in, Y_in, Z_in, alpha_in = self.inputs
     X, Y, Z = batch
     

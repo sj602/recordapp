@@ -17,13 +17,13 @@ class ScreenReader:
             user32 = ctypes.windll.user32
             screen_size = user32.GetSystemMetrics(
                 0), user32.GetSystemMetrics(1)
-        elif PLATFORM == "Darwin":
-            from AppKit import NSScreen
-
-            screen_size = (
-                int(NSScreen.mainScreen().frame().size.width),
-                int(NSScreen.mainScreen().frame().size.height),
-            )
+        # elif PLATFORM == "Darwin":
+        #     from AppKit import NSScreen
+        #
+        #     screen_size = (
+        #         int(NSScreen.mainScreen().frame().size.width),
+        #         int(NSScreen.mainScreen().frame().size.height),
+        #     )
         self.SCREEN_SIZE = screen_size
         print(self.SCREEN_SIZE)
 
@@ -32,11 +32,10 @@ class ScreenReader:
         self.out = None
 
     def screen_record(self):
-        self.out = cv2.VideoWriter(
-            self.file_name, self.fourcc, fps=20.0, self.SCREEN_SIZE)
+        self.out = cv2.VideoWriter(filename=self.file_name, fourcc=self.fourcc, fps=20.0, frameSize=self.SCREEN_SIZE)
 
         # self.out = cv2.VideoWriter(
-        #     filename=self.file_name, apiPreference=None, params=None, fourcc=self.fourcc, fps=20.0, frameSize=self.SCREEN_SIZE)
+            # filename=self.file_name, apiPreference=None, params=None, fourcc=self.fourcc, fps=20, frameSize=self.SCREEN_SIZE)
 
         while True:
             img = ImageGrab.grab()

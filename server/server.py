@@ -1,17 +1,33 @@
 import os
+import sys
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
+# MODEL_DIR = os.path.dirname(BASE_DIR)
+sys.path.append(BASE_DIR)
+# from src.models.io import upsample_wav
+# from src.run import get_model
 
 def audio_resolution(original_audio):
-    with open(f"{BASE_DIR}/src/file.txt", "w+") as f:
+    print('audio_resolution 진입')
+    file = f"{BASE_DIR}/src/file.txt"
+    with open(file, "w+") as f:
         f.write(original_audio)
-    os.system(
-        f"python {BASE_DIR}/src/run.py eval --logname {BASE_DIR}/src/model.ckpt --wav-file-list {BASE_DIR}/src/file.txt --r 4"
-    )
+        print(f'BASE_DIR: {BASE_DIR}')
+        print(f'write file: {original_audio}')
+        # args = {
+        #     "logname": f"{BASE_DIR}\src\\model.ckpt",
+        #     "r": 4,
+        #     "sr": 16000
+        # }
+        # model = get_model(args, 0, args['r'], from_ckpt=True, train=False)
+        # upsample_wav(original_audio, args, model)
+        # os.system(
+        #     f"python {BASE_DIR}\src\\run.py eval --logname {BASE_DIR}\src\\model.ckpt --wav-file-list {file} —r 4"
+        # )
+        # f.write(original_audio)
 
-    # with open(f"{SERVER_DIR}/src/file.txt", "w+") as f:
-    #     f.write(original_audio)
-    # os.system(
-    #     f"python {SERVER_DIR}/src/run.py eval --logname {SERVER_DIR}/src/model.ckpt --wav-file-list {SERVER_DIR}/src/file.txt --r 4"
-    # )
+        os.system(
+            f"python {BASE_DIR}/src/run.py eval --logname {BASE_DIR}/src/model.ckpt --wav-file-list {original_audio} --r 4"
+        )
+        print(f'exit')

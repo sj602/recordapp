@@ -1,3 +1,5 @@
+#-*- coding: utf-8 -*-
+
 import os
 
 os.sys.path.append(os.path.abspath("."))
@@ -13,7 +15,6 @@ import numpy as np
 import models
 from models.model import default_opt
 from models.io import load_h5, upsample_wav
-import tensorflow as tf
 
 # ----------------------------------------------------------------------------
 
@@ -112,15 +113,10 @@ def eval(args):
     # load model
     model = get_model(args, 0, args.r, from_ckpt=True, train=False)
     model.load(args.logname)  # from default checkpoint
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-    if args.wav_file_list:
-        with open(args.wav_file_list) as f:
-            for line in f:
-                try:
-                    print(line.strip())
-                    upsample_wav(line.strip(), args, model)
-                except EOFError:
-                    print("WARNING: Error reading file:", line.strip())
+    file_dir = os.path.join(BASE_DIR, "6temp.wav")
+    upsample_wav("6temp.wav", args, model)
 
 
 def get_model(args, n_dim, r, from_ckpt=False, train=True):
