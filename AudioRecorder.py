@@ -5,7 +5,7 @@ class AudioRecorder:
     def __init__(self):
         self.CHUNK = 1024  # Record in chunks of 1024 samples
         self.sample_format = pyaudio.paInt16  # 16 bits per sample
-        self.channels = 1
+        self.channels = 2
         self.is_recording = False
         self.fs = 44100  # Record at 44,100 samples per second
         self.record_second = 10

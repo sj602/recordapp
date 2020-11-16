@@ -1,20 +1,19 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
+from models.io import load_h5, upsample_wav
+from models.model import default_opt
+import models
+import numpy as np
+import argparse
+import matplotlib
 import os
 
 os.sys.path.append(os.path.abspath("."))
 os.sys.path.append(os.path.dirname(os.path.abspath(".")))
 
-import matplotlib
 
 matplotlib.use("Agg")
 
-import argparse
-import numpy as np
-
-import models
-from models.model import default_opt
-from models.io import load_h5, upsample_wav
 
 # ----------------------------------------------------------------------------
 
@@ -49,8 +48,10 @@ def make_parser():
         type=int,
         help="number of layers in each of the D and U halves of the network",
     )
-    train_parser.add_argument("--alg", default="adam", help="optimization algorithm")
-    train_parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
+    train_parser.add_argument("--alg", default="adam",
+                              help="optimization algorithm")
+    train_parser.add_argument("--lr", default=1e-3,
+                              type=float, help="learning rate")
 
     # eval
 
@@ -103,7 +104,8 @@ def train(args):
     # model.load(args.logname) # from default checkpoint
 
     # train model
-    model.fit(X_train, Y_train, Z_train, X_val, Y_val, Z_val, n_epoch=args.epochs)
+    model.fit(X_train, Y_train, Z_train, X_val,
+              Y_val, Z_val, n_epoch=args.epochs)
 
 
 #   model.fit(X_train, Y_train, X_val, Y_val, n_epoch=args.epochs)
@@ -113,10 +115,7 @@ def eval(args):
     # load model
     model = get_model(args, 0, args.r, from_ckpt=True, train=False)
     model.load(args.logname)  # from default checkpoint
-    BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-    file_dir = os.path.join(BASE_DIR, "6temp.wav")
-    upsample_wav("6temp.wav", args, model)
+    upsample_wav(args.wav_file_list, args, model)
 
 
 def get_model(args, n_dim, r, from_ckpt=False, train=True):
@@ -152,4 +151,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

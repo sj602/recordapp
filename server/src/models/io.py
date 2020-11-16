@@ -40,7 +40,6 @@ def upsample_wav(wav, args, model):
     # load signal
     print(f"wav: {wav}")
     x_hr, fs = librosa.load(wav, sr=args.sr)
-    print(f"x_hr: {x_hr}, fs: {fs}")
 
     # downscale signal
     # x_lr = np.array(x_hr[0::args.r])
