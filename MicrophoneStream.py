@@ -2,14 +2,16 @@ import pyaudio
 from six.moves import queue
 import time
 
-# 녹음용 값 
+# 녹음용 값
 # 16khz
 RATE = 16000
 # 버퍼는 1600
 CHUNK = int(RATE / 10)  # 100ms
 
+
 class MicrophoneStream(object):
     """마이크 입력 클래스"""
+
     def __init__(self, rate, chunk):
         self._rate = rate
         self._chunk = chunk
@@ -31,7 +33,7 @@ class MicrophoneStream(object):
             channels=1, rate=self._rate,
             input=True, frames_per_buffer=self._chunk,
             stream_callback=self._fill_buffer,
-        )        
+        )
         self.closed = False
         return self
 
@@ -46,18 +48,18 @@ class MicrophoneStream(object):
         # streaming_recognize method will not block the process termination.
         self._buff.put(None)
         self._audio_interface.terminate()
-    
-    # 마이크 버퍼가 쌓이면(CHUNK = 1600) 이 함수 호출 됨. 
+
+    # 마이크 버퍼가 쌓이면(CHUNK = 1600) 이 함수 호출 됨.
     def _fill_buffer(self, in_data, frame_count, time_info, status_flags):
         # 마이크 입력 받으면 큐에 넣고 리턴
         self._buff.put(in_data)
         return None, pyaudio.paContinue
 
-    # 제너레이터 함수 
+    # 제너레이터 함수
     def generator(self):
-        #클래스 종료될 떄까지 무한 루프 돌림 
+        # 클래스 종료될 떄까지 무한 루프 돌림
         while not self.closed:
-            
+
             # 큐에 데이터를 기다림.
             # block 상태임.
             chunk = self._buff.get()
@@ -69,7 +71,7 @@ class MicrophoneStream(object):
             # data에 마이크 입력 받기
             data = [chunk]
 
-            # 추가로 받을 마이크 데이터가 있는지 체크 
+            # 추가로 받을 마이크 데이터가 있는지 체크
             while True:
                 try:
                     # 데이터가 더 있는지 체크
@@ -82,6 +84,6 @@ class MicrophoneStream(object):
                     # 큐에 데이터가 더이상 없다면 break
                     break
 
-            #마이크 데이터를 리턴해줌 
+            # 마이크 데이터를 리턴해줌
             yield b''.join(data)
 # [END audio_stream]

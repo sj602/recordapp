@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QPushButton,
     QLabel,
-    QFileDialog, QGroupBox, QHBoxLayout, QVBoxLayout, QToolTip, QComboBox, QDialog, QProgressBar, QMessageBox
+    QFileDialog, QGroupBox, QHBoxLayout, QVBoxLayout, QToolTip, QComboBox, QDialog, QProgressBar, QMessageBox, QAction
 )
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -31,6 +31,8 @@ desc = 0
 
 
 class AudioResolutionApp(QWidget):
+    convert_rate_var = 1
+
     def __init__(self):
         super().__init__()
         self.is_recording = False
@@ -39,8 +41,10 @@ class AudioResolutionApp(QWidget):
         self.record_shortcut = Key.f2  # default record shortcut is F2
         self.output_file_name = None
         self.file_name = None
+        self.convert_rate_bar = QProgressBar(self)
+        self.convert_rate_bar.setMaximum(100)
+        self.modeling = False
         self.init_ui()
-        self.rate = 0  # 모델 변환율
 
     def init_ui(self):
         """
@@ -107,7 +111,6 @@ class AudioResolutionApp(QWidget):
             if (p.get_device_info_by_host_api_device_index(0, i).get('maxInputChannels')) > 0:
                 self.cb.addItem(
                     p.get_device_info_by_host_api_device_index(0, i).get('name'))
-                desc = i
         self.cb.setFixedSize(200, 30)
         self.cb.setStyleSheet("color: #BDBDBD;"
                               "font-family: Consolas")
@@ -116,7 +119,7 @@ class AudioResolutionApp(QWidget):
         self.micSelect_btn.setIcon(QIcon('Icon06.png'))
         self.micSelect_btn.setIconSize(QSize(40, 40))
         self.micSelect_btn.setToolTip('Mic Select')
-        self.micSelect_btn.clicked.connect(self.micSelect)
+        self.micSelect_btn.clicked.connect(self.getaudiodevices)
         self.micSelect_btn.setFixedSize(40, 40)
         self.micSelect_btn.setStyleSheet("border-style: solid;"
                                          "border-width: 1px;"
@@ -157,19 +160,21 @@ class AudioResolutionApp(QWidget):
         # self.convert_rate_label = QLabel("변환율 나타내기")
         # self.setFixedWidth(600)
         # self.setFixedHeight(300)
-
-        # 모델 진행율 나타내기
-        self.progress = QProgressBar(self)
-        # self.progress.setGeometry(0, 0, 300, 25)
-        self.progress.setMaximum(100)
-        # self.progress.setValue(100)
+        self.convert_rate_label = QLabel('Convert Rate')
+        self.convert_rate_label.setStyleSheet("color: #BDBDBD;"
+                                              "border: 2px;"
+                                              "border-style: solid;"
+                                              "border-width: 1px;"
+                                              "border-color: #242424;"
+                                              "font-size: 14px;"
+                                              "font-family: Consolas")
 
         grid = QGridLayout()
         self.setLayout(grid)
 
         grid.addWidget(self.titleLabel, 0, 0, 1, 5)
-        # grid.addWidget(self.convert_rate_label, 2, 1, 1, 1)  # 변환율 나타내주는 레이블
-        # grid.addWidget(self.convert_rate_bar, 1, 1, 5, 5)
+        grid.addWidget(self.convert_rate_label, 2, 1, 1, 1)  # 변환율 나타내주는 레이블
+        grid.addWidget(self.convert_rate_bar, 1, 1, 5, 5)
         grid.addWidget(self.record_btn, 8, 0)
         # grid.addWidget(self.help_btn, 8, 1)
         grid.addWidget(self.cb, 8, 2)
@@ -204,14 +209,15 @@ class AudioResolutionApp(QWidget):
         self.file_name = QFileDialog.getSaveFileName(
             None, "저장될 파일 위치", "", "avi Files (*.avi)", "", options=options
         )[0]
-        if self.file_name == "":
-            exit()
+        if not self.file_name:
+            return False
         else:
             self.output_file_name = self.file_name + ".avi"
             self.screen_recorder.file_name = self.file_name + \
                 "temp.avi"  # 녹음 파일(임시 파일)명 설정
             self.audio_recorder.file_name = self.file_name + \
                 "temp.wav"  # 녹화 파일(임시 파일)명 설정
+            return True
 
     def press_record_shortcut(self, key):
         if key == self.record_shortcut:
@@ -234,7 +240,11 @@ class AudioResolutionApp(QWidget):
         self.set_is_recording()
 
         if self.is_recording:
-            self.select_file_location()
+            # self.select_file_location()
+            start_recording = self.select_file_location()
+            if not start_recording:
+                self.is_recording = False
+                return
             self.showMinimized()  # 애플리케이션 창 최소화 하기
             time.sleep(1)  # 창이 최소화되는동안 1초간 정지
 
@@ -243,8 +253,9 @@ class AudioResolutionApp(QWidget):
             )
             screen_record_thread.daemon = True
             audio_record_thread = threading.Thread(
-                target=self.audio_recorder.audio_record
+                target=self.audio_recorder.audio_record,
             )
+            self.audio_recorder.inputDevice = self.desc
             audio_record_thread.daemon = True
 
             screen_record_thread.start()  # 녹화 시작
@@ -253,15 +264,22 @@ class AudioResolutionApp(QWidget):
         else:
             print("딥러닝 변환 부분")
             self.showNormal()  # 최소화된 애플리케이션 창 다시 보여주기
-            # self.convert_audio_to_super_resolution()  # 딥러닝으로 변환하는 로직 부분
             model_thread = threading.Thread(
                 target=self.convert_audio_to_super_resolution)
             model_thread.daemon = True
             model_thread.start()
-            model_thread.join()
+            rate_bar_thread = threading.Thread(target=self.rate_bar)
+            rate_bar_thread.daemon = True
+            rate_bar_thread.start()
             merge_thread = threading.Thread(target=self.merge_audio_and_video)
             merge_thread.daemon = True
             merge_thread.start()
+
+    def rate_bar(self):
+        print("----rate bar-----")
+        while self.modeling:
+            # print(f'convert_rate_val: {AudioResolutionApp.convert_rate_val}')
+            self.convert_rate_bar.setValue(AudioResolutionApp.convert_rate_val)
 
     def convert_audio_to_super_resolution(self):
         print("변환을 시작합니다...")
@@ -287,34 +305,43 @@ class AudioResolutionApp(QWidget):
         with Listener(on_press=self.press_record_shortcut) as listener:
             listener.join()
 
+    def getaudiodevices(self):
+        # for i in range(self.p.get_device_count()):
+        #     dev = self.p.get_device_info_by_index(i)
+        #     print((i, dev['name'], dev['maxInputChannels']))
+        self.desc = self.cb.currentIndex() + 1
+        print(self.desc)
+
     def merge_audio_and_video(self):
         sc_file_name = self.screen_recorder.file_name
         # ad_file_name = self.audio_recorder.file_name # 원본 오디오 파일 이름
         ad_file_name = self.audio_recorder.file_name + "..pr.wav"  # 딥러닝 결과 오디오 파일 이름
         output_file_name = self.output_file_name
 
-        # print(self.audio_recorder.file_name)
-        audio_clip = mpe.AudioFileClip(ad_file_name)
-        video_clip = mpe.VideoFileClip(sc_file_name)
-        new_audio_clip = mpe.CompositeAudioClip(
-            [audio_clip])  # 녹화된 Video file 객체 얻기
-        # print('new_audio_clip' + new_audio_clip)
-        video_clip.audio = new_audio_clip  # Video file의 audio를 새로 쓰기
-        video_clip.write_videofile(
-            output_file_name, codec="png")  # 최종적인 Video file을 쓰기
+        while True:
+            if not self.modeling and os.path.isfile(ad_file_name):
+                # print(self.audio_recorder.file_name)
+                audio_clip = mpe.AudioFileClip(ad_file_name)
+                video_clip = mpe.VideoFileClip(sc_file_name)
+                new_audio_clip = mpe.CompositeAudioClip(
+                    [audio_clip])  # 녹화된 Video file 객체 얻기
+                # print('new_audio_clip' + new_audio_clip)
+                video_clip.audio = new_audio_clip  # Video file의 audio를 새로 쓰기
+                video_clip.write_videofile(
+                    output_file_name, codec="png")  # 최종적인 Video file을 쓰기
 
-        # 녹화 파일 삭제
-        os.remove(self.file_name + "temp.wav")
-        os.remove(self.file_name + "temp.avi")
-        os.remove(self.audio_recorder.file_name + "..pr.wav")
-        os.remove(self.audio_recorder.file_name + "..pr.png")
-        os.remove(self.audio_recorder.file_name + "..lr.wav")
-        os.remove(self.audio_recorder.file_name + "..lr.png")
-        os.remove(self.audio_recorder.file_name + "..hr.wav")
-        os.remove(self.audio_recorder.file_name + "..hr.png")
+                # 녹화 파일 삭제
+                os.remove(self.file_name + "temp.wav")
+                os.remove(self.file_name + "temp.avi")
+                os.remove(self.audio_recorder.file_name + "..pr.wav")
+                os.remove(self.audio_recorder.file_name + "..pr.png")
+                os.remove(self.audio_recorder.file_name + "..lr.wav")
+                os.remove(self.audio_recorder.file_name + "..lr.png")
+                os.remove(self.audio_recorder.file_name + "..hr.wav")
+                os.remove(self.audio_recorder.file_name + "..hr.png")
 
-        print("merge success")
+                print("merge success")
 
-    def micSelect(self):
-        AudioRecorder.channels = desc
-        print(desc)
+
+class NegativeError(Exception):
+    pass

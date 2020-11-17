@@ -1,12 +1,12 @@
+from matplotlib import pyplot as plt
+from scipy.signal import decimate
 import os
 import numpy as np
 import h5py
 import librosa
-
+from ....Main import gui
 # from tqdm import tqdm
-from scipy.signal import decimate
 
-from matplotlib import pyplot as plt
 
 BASE_DIR = os.path.dirname(
     os.path.dirname(os.path.dirname(
@@ -53,6 +53,9 @@ def upsample_wav(wav, args, model):
     tempI = -1
     len_x_lr = len(x_lr)
     while i < len_x_lr:
+        rate = int(i / len_x_lr * 100)
+        gui.progress.setValue(rate)
+
         if i + 2048 > len_x_lr:
             tempI = len_x_lr * 4 - len(x_pr)
             x_lr_crop = x_lr[len_x_lr - 2048:]
