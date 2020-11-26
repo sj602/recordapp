@@ -23,7 +23,7 @@ python -m venv venv
 ```
 
 ```
-cd venv/bin
+cd venv/Scripts
 ```
 
 ```
